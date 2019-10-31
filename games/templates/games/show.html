@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div id="date">
+  <div>
+      <div v-if="games" v-for="game in games">
+        [[ game.home_team_name ]] vs. [[ game.away_team_name ]] at [[ game.start_time ]]
+      </div>
+      <div v-else>
+        No games today
+      </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div id="gapp">
+  <div>
+    [[ optimized ]]
+  </div>
+  <div>
+      <ul>
+        <li v-for="game in games">
+          [[ game ]]
+        </li>
+      </ul>
+  </div>
+</div>
+
+{% endblock %}
