@@ -1,15 +1,41 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div id="date">
+<div id="date" data-date="{{ date }}">
+  <h3>Games</h3>
   <div>
       <div v-if="games" v-for="game in games">
-        [[ game.home_team_name ]] vs. [[ game.away_team_name ]] at [[ game.start_time ]]
+        <div>
+          [[ game.home_team_name ]] vs. [[ game.away_team_name ]] at [[ game.start_time ]]
+        </div>
       </div>
       <div v-else>
         No games today
       </div>
   </div>
+  </br>
+  <h3>StatLines</h3>
+
+  <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Team</th>
+          <th>Points</th>
+          <th>Minutes</th>
+          <th>Active</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="stat_lines" v-for="stat_line in stat_lines">
+                <td>[[ stat_line.name ]]</td>
+                <td>[[ stat_line.abbrv ]] </td>
+                <td>[[ stat_line.points ]]</td>
+                <td>[[ stat_line.minutes ]]</td>
+                <td>[[ stat_line.active ]]</td>
+        </tr>
+      </tbody>
+    </table>
 </div>
 
 {% endblock %}

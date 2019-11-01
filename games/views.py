@@ -13,7 +13,8 @@ def index(request):
 
 def date(request, date_str):
     try:
-        date = datetime.date.fromisoformat(date_str)
+        datetime.date.fromisoformat(date_str)
     except ValueError:
         raise Http404("Date not correct format")
-    return render(request, 'games/show.html')
+    context = { 'date': date_str }
+    return render(request, 'games/show.html', context)
