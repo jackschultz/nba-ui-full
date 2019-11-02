@@ -56,7 +56,11 @@ Vue.component('demo-grid', {
 var date = new Vue({
   delimiters: ['[[', ']]'],
   el: '#date',
-  data: { games: [], stat_lines: []},
+  data: { games: [],
+          statLines: {},
+          selectedStatLines: [],
+          projectionVersions: ['0.1-avg-dfn-min-03'],
+          selectedProjectionVersion: '0.1-avg-dfn-min-03' },
   mounted () {
     this.date = this.$el.getAttribute('data-date');
     this.starter(this.date);
@@ -75,13 +79,33 @@ var date = new Vue({
         method: 'get',
         url: 'http://localhost:5001/stat_lines',
         headers: { 'Content-type': 'application/json' },
-        params: { date: date }})
-        .then((response) => { this.stat_lines = response.data });
+        params: { date: date, version: this.selectedProjectionVersion }})
+        .then((response) => { this.selectedStatLines = response.data;
+                              this.statLines[this.selectProjectionVersion] = response.data;
+                             });
+    },
+    getProjectionVersions: function(date) {
+      axios({
+        method: 'get',
+        url: 'http://localhost:5001/versions',
+        headers: { 'Content-type': 'application/json' }})
+        .then((response) => { this.projectionVersions = response.data });
+    },
+    selectedNewVersion: function(event) {
+      this.selectedProjectionVersion = event.target.value;
+      this.getStatLines(this.date);
+      /*
+      axios({
+        method: 'get',
+        url: 'http://localhost:5001/versions',
+        headers: { 'Content-type': 'application/json' }})
+        .then((response) => { this.projectionVersions = response.data }); */
     },
     starter: function(date) {
       this.getGames(date);
       this.getStatLines(date);
-    },
+      this.getProjectionVersions(date);
+    }
   },
   created () {
   },

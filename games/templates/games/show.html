@@ -2,40 +2,86 @@
 {% block content %}
 
 <div id="date" data-date="{{ date }}">
-  <h3>Games</h3>
-  <div>
-      <div v-if="games" v-for="game in games">
-        <div>
-          [[ game.home_team_name ]] vs. [[ game.away_team_name ]] at [[ game.start_time ]]
+  <div class="row">
+    <h3>Games</h3>
+  </div>
+  <div class="row">
+
+    <div class="column large-4" v-if="games" v-for="game in games">
+        <div class="card card-product">
+          <div class="card-section">
+            <div><b>[[ game.away_team_name ]]</b> ([[ game.away_team_score ]])</div>
+            <div>vs</div>
+            <div><b>[[ game.home_team_name ]]</b> ([[game.home_team_score]]) </div>
+          </div>
+          <div class="card-section">
+          </div>
         </div>
+  
       </div>
       <div v-else>
         No games today
       </div>
   </div>
   </br>
-  <h3>StatLines</h3>
 
-  <table>
+  <div class="row">
+    <h3>StatLines</h3>
+  </div>
+
+  <div class="row">
+    <select @change="selectedNewVersion($event)" v-model="selectedProjectionVersion">
+        <option v-for="version in projectionVersions" :value="version.version">
+            [[ version.version ]]
+        </option>
+    </select>
+  </div>
+  <div class="row">
+    <table>
+        <caption>Stat Lines</caption>
       <thead>
+        <tr>
+          <th rowspan="1" colspan="9" >
+          </th>
+          <th rowspan="1" colspan="4" >
+              Projections
+          </th>
+        </tr>
         <tr>
           <th>Name</th>
           <th>Team</th>
           <th>Points</th>
           <th>Minutes</th>
           <th>Active</th>
+          <th>DK Salary</th>
+          <th>DK Positions</th>
+          <th>FD Salary</th>
+          <th>FD Position</th>
+          <th>ProjVersion</th>
+          <th>Minutes</th>
+          <th>DK Points</th>
+          <th>FD Points</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-if="stat_lines" v-for="stat_line in stat_lines">
-                <td>[[ stat_line.name ]]</td>
-                <td>[[ stat_line.abbrv ]] </td>
-                <td>[[ stat_line.points ]]</td>
-                <td>[[ stat_line.minutes ]]</td>
-                <td>[[ stat_line.active ]]</td>
+        <tr v-if="statLine" v-for="statLine in selectedStatLines">
+          <td>[[ statLine.name ]]</td>
+          <td>[[ statLine.abbrv ]] </td>
+          <td>[[ statLine.points ]]</td>
+          <td>[[ statLine.minutes ]]</td>
+          <td>[[ statLine.active ]]</td>
+          <td>[[ statLine.dk_salary ]]</td>
+          <td>[[ statLine.dk_positions ]]</td>
+          <td>[[ statLine.fd_salary ]]</td>
+          <td>[[ statLine.fd_positions ]]</td>
+          <td>[[ statLine.proj_version ]]</td>
+          <td>[[ statLine.proj_minutes ]]</td>
+          <td>[[ statLine.proj_dk_points ]]</td>
+          <td>[[ statLine.proj_fd_points ]]</td>
         </tr>
       </tbody>
     </table>
+  </div>
 </div>
 
 {% endblock %}
