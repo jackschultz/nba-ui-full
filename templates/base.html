@@ -7,7 +7,9 @@
     <meta name="description" content="">
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    {% load staticfiles %}
     <link rel="stylesheet" href="https://dhbhdrzi4tiry.cloudfront.net/cdn/sites/foundation.min.css">
+    <link rel="stylesheet" type= "text/css" href="{% static 'css/self.css' %}">
   </head>
   <body>
 
@@ -33,6 +35,5 @@
     </div>
 
   </body>
-  {% load staticfiles %}
   <script type="module" src="{% static 'main.js' %}"></script>
 </html>

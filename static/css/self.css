@@ -1,0 +1,65 @@
+
+.row {
+    max-width: 100rem;
+}
+
+.button {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    padding-right: 6px;
+    padding-left: 6px;
+}
+
+.switch-paddle {
+    background: black;
+}
+
+table {
+    border: 2px solid #42b983;
+    border-radius: 3px;
+  }
+
+  th {
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  td {
+  }
+  
+  th, td {
+    min-width: 40px;
+    padding: 10px 20px;
+  }
+  
+  th.active {
+    color: #fff;
+  }
+  
+  th.active .arrow {
+    opacity: 1;
+  }
+  
+  .arrow {
+    display: inline-block;
+    vertical-align: middle;
+    width: 0;
+    height: 0;
+    margin-left: 5px;
+    opacity: 0.66;
+  }
+  
+  .arrow.asc {
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 4px solid #fff;
+  }
+  
+  .arrow.dsc {
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid #fff;
+  }
