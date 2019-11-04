@@ -6,22 +6,23 @@
     <h3>Games</h3>
   </div>
   <div class="row">
-
     <div class="column large-4" v-if="games" v-for="game in games">
-        <div class="card card-product">
-          <div class="card-section">
-            <div><b>[[ game.away_team_name ]]</b> ([[ game.away_team_score ]])</div>
-            <div>vs</div>
-            <div><b>[[ game.home_team_name ]]</b> ([[game.home_team_score]]) </div>
-          </div>
-          <div class="card-section">
-          </div>
+      <div class="card card-product">
+        <div class="card-section">
+          <div><b>[[ game.away_team_name ]]</b> ([[ game.away_team_score ]])</div>
+          <div>vs</div>
+          <div><b>[[ game.home_team_name ]]</b> ([[game.home_team_score]]) </div>
         </div>
-  
+        <div class="card-section">
+          <input type="checkbox" :id="gameAbbrv(game)" :value="gameAbbrv(game)" v-model="includedGames">
+          <label for="checkbox">Included</label>
+        </div>
       </div>
-      <div v-else>
-        No games today
-      </div>
+
+    </div>
+    <div v-else>
+      No games today
+    </div>
   </div>
   </br>
 
@@ -34,57 +35,70 @@
   <br>
 
   <div class="row">
+    <h3>Optimized</h3>
+    <button class="button" v-on:click="optimize()">click to optimize</button>
+    <div v-for="player in optimized.players">
+      [[ player ]]
+    </div>
+  </div>
+
+
+  <div class="row">
     <h3>StatLines</h3>
   </div>
 
   <div class="row">
     <div class="column large-4">
       <select @change="selectedNewVersion($event)" v-model="selectedProjectionVersion">
-          <option v-for="version in projectionVersions" :value="version.version">
-              [[ version.version ]]
-          </option>
+        <option v-for="version in projectionVersions" :value="version.version">
+          [[ version.version ]]
+        </option>
       </select>
     </div>
   </div>
 
   <div class="row">
-    <table>
-        <caption>Stat Lines</caption>
-      <thead>
-        <tr>
-          <th rowspan="1" colspan="7" >
-          </th>
-          <th rowspan="1" colspan="4" >
+    <div class="column">
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="1" colspan="2">
+            </th>
+            <th rowspan="1" colspan="4">
               Projections [[ selectedProjectionVersion ]]
-          </th>
-        </tr>
-        <tr>
-          <th v-for="slc in statLineColumns" @click="sortBy(slc.sortKey)">
-            [[ slc.title ]]
-            <span class="arrow" :class="sortOrders[slc.sortKey] > 0 ? 'asc' : 'dsc'">
-            </span>
-          </th>
+            </th>
+            <th rowspan="1" colspan="3">
+              Actuals
+            </th>
+          </tr>
+          <tr>
+            <th v-for="slc in statLineColumns" @click="sortBy(slc.sortKey)">
+              [[ slc.title ]]
+              <span class="arrow" :class="sortOrders[slc.sortKey] > 0 ? 'asc' : 'dsc'">
+              </span>
+            </th>
 
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="statLine" v-for="statLine in filteredSelectedStatLines">
-          <td>[[ statLine.name ]]</td>
-          <td>[[ statLine.abbrv ]] </td>
-          <td v-if="selectedSite == 'dk'">[[ statLine.dk_points ]]</td>
-          <td v-if="selectedSite == 'fd'">[[ statLine.fd_points ]]</td>
-          <td>[[ statLine.minutes ]]</td>
-          <td>[[ statLine.sl_active ]]</td>
-          <td v-if="selectedSite == 'dk'">[[ statLine.dk_salary ]]</td>
-          <td v-if="selectedSite == 'dk'">[[ statLine.dk_positions ]]</td>
-          <td v-if="selectedSite == 'fd'">[[ statLine.fd_salary ]]</td>
-          <td v-if="selectedSite == 'fd'">[[ statLine.fd_positions ]]</td>
-          <td>[[ statLine.proj_minutes ]]</td>
-          <td v-if="selectedSite == 'dk'">[[ statLine.dk_proj_points ]]</td>
-          <td v-if="selectedSite == 'fd'">[[ statLine.fd_proj_points ]]</td>
-        </tr>
-      </tbody>
-    </table>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="statLine" v-for="statLine in filteredSelectedStatLines">
+            <td>[[ statLine.name ]]</td>
+            <td>[[ statLine.abbrv ]] </td>
+            <td v-if="selectedSite == 'dk'">[[ statLine.dk_salary ]]</td>
+            <td v-if="selectedSite == 'dk'">[[ statLine.dk_positions ]]</td>
+            <td v-if="selectedSite == 'fd'">[[ statLine.fd_salary ]]</td>
+            <td v-if="selectedSite == 'fd'">[[ statLine.fd_positions ]]</td>
+            <td>[[ statLine.proj_minutes ]]</td>
+            <td v-if="selectedSite == 'dk'">[[ statLine.dk_proj_points ]]</td>
+            <td v-if="selectedSite == 'fd'">[[ statLine.fd_proj_points ]]</td>
+            <td>[[ statLine.minutes ]]</td>
+            <td v-if="selectedSite == 'dk'">[[ statLine.dk_points ]]</td>
+            <td v-if="selectedSite == 'fd'">[[ statLine.fd_points ]]</td>
+            <td>[[ statLine.sl_active ]]</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 

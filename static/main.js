@@ -1,60 +1,3 @@
-
-Vue.component('demo-grid', {
-  template: '#grid-template',
-  props: {
-    players: Array,
-    columns: Array,
-    filterKey: String
-  },
-  data: function () {
-    var sortOrders = {}
-    this.columns.forEach(function (key) {
-      sortOrders[key] = 1
-    })
-    return {
-      sortKey: '',
-      sortOrders: sortOrders
-    }
-  },
-  computed: {
-    filteredplayers: function () {
-      var sortKey = this.sortKey
-      var filterKey = this.filterKey && this.filterKey.toLowerCase()
-      var order = this.sortOrders[sortKey] || 1
-      var players = this.players
-      if (filterKey) {
-        players = players.filter(function (row) {
-          return Object.keys(row).some(function (key) {
-            return String(row[key]).toLowerCase().indexOf(filterKey) > -1
-          })
-        })
-      }
-      if (sortKey) {
-        players = players.slice().sort(function (a, b) {
-          a = a[sortKey]
-          b = b[sortKey]
-          return (a === b ? 0 : a > b ? 1 : -1) * order
-        })
-      }
-      return players
-    }
-  },
-  filters: {
-    capitalize: function (str) {
-      return str.charAt(0).toUpperCase() + str.slice(1)
-    }
-  },
-  methods: {
-    sortBy: function (key) {
-      this.sortKey = key
-      this.sortOrders[key] = this.sortOrders[key] * -1
-    }
-  }
-});
-
-
-
-
 var date = new Vue({
   delimiters: ['[[', ']]'],
   el: '#date',
@@ -64,14 +7,21 @@ var date = new Vue({
           var sortOrders = {};
           var sortKey = 'proj_minutes';
           var selectedSite = 'fd';
-          var statLineColumnsTitles = ['Name', 'Team', 'Points', 'Minutes', 'Active', 'Salary', 'Positions', 'Minutes', 'Points'];
-          var statLineColumnsSortKeys = ['name', 'abbrv', 'points', 'minutes', 'sl_active', 'salary', 'positions', 'proj_minutes', 'proj_points'];
+          var statLineColumnsTitles = ['Name', 'Team', 'Salary', 'Positions', 'Minutes', 'Points', 'Minutes', 'Points', 'Active'];
+          var statLineColumnsSortKeys = ['name', 'abbrv', 'salary', 'positions', 'proj_minutes', 'proj_points', 'minutes', 'points', 'sl_active'];
           var statLineColumns = statLineColumnsTitles.map(function(e, i) {
             return { 'title': e, 'sortKey': statLineColumnsSortKeys[i]};
           });
           statLineColumns.forEach(function (key) {
             sortOrders[key.sortKey] = -1;
           });
+          var excludedPlayerIds = [];
+          var includedPlayerIds = [];
+          var includedGames = [];
+          var includedTeamAbbrvs = new Set(); // used for the split('-') team abbrvs
+          var optimized = {};
+          optimized['players'] = ['Jack', 'Other'];
+          console.log(optimized);
           return { 
             games: [],
             statLines: {},
@@ -83,6 +33,10 @@ var date = new Vue({
             sortKey: sortKey,
             sortOrders: sortOrders,
             statLineColumnsSortKeys: statLineColumnsSortKeys,
+            excludedPlayerIds: excludedPlayerIds,
+            includedPlayerIds: includedPlayerIds,
+            includedGames: includedGames,
+            optimized: optimized,
           };
   },
   computed: {
@@ -90,7 +44,6 @@ var date = new Vue({
       var sortKey = this.sortKey;
       var ssls = this.selectedStatLines;
       var order = this.sortOrders[sortKey] || -1;
-      console.log(this.sortOrders);
       if (sortKey) {
         if ( ['points', 'positions', 'salary', 'proj_points'].includes(sortKey)) {
           sortKey = this.selectedSite + '_' + sortKey;
@@ -103,6 +56,17 @@ var date = new Vue({
             return (a === b ? 0 : a > b ? 1 : -1) * order;
           });
         }
+      }
+      if(this.includedGames) {
+        this.includedTeamAbbrvs = new Set();
+        this.includedGames.map((game) => {
+          game.split('-').forEach((et) => {
+            this.includedTeamAbbrvs.add(et);
+          });
+        });
+        ssls = ssls.filter((row) => {
+          return this.includedTeamAbbrvs.has(row.abbrv);
+        });
       }
       return ssls;
     }
@@ -118,7 +82,13 @@ var date = new Vue({
         url: 'http://localhost:5001/games',
         headers: { 'Content-type': 'application/json' },
         params: { date: date }})
-        .then((response) => { this.games = response.data });
+        .then((response) => {
+          this.games = response.data;
+          this.includedGames = [];
+          this.games.forEach((game) => {
+            return this.includedGames.push(this.gameAbbrv(game));
+          });
+        });
     },
     getStatLines: function(date) {
       axios({
@@ -150,11 +120,45 @@ var date = new Vue({
       this.sortKey = key;
       console.log(this.sortOrders);
       var sortOrders = this.sortOrders;
-      this.statLineColumnsSortKeys.forEach(function(slcsk) {
+      this.statLineColumnsSortKeys.forEach((slcsk) => {
         if (slcsk !== key) { sortOrders[slcsk] = 1; } else { sortOrders[key] = sortOrders[key] * -1; };
       });
       this.sortOrders = sortOrders;
       console.log(this.sortOrders);
+    },
+    gameAbbrv: function(game) {
+      return game.home_team_abbrv + '-' + game.away_team_abbrv
+    },
+    optimize: function() {
+      this.optimized = [];
+      var date = this.date;
+      var excludeSet = new Set();
+      var includeSet = new Set();
+      console.log(this.includedTeamAbbrvs);
+      this.selectedStatLines.forEach((sl) => {
+        if (!this.includedTeamAbbrvs.has(sl.abbrv)) {
+          excludeSet.add(sl.pid)
+        }
+      });
+      this.excludedPlayerIds.forEach((pid) => {
+        excludeSet.add(pid);
+      });
+      var version = this.selectedProjectionVersion;
+      var site = this.selectedSite;
+      var excludes = Array.from(excludeSet);
+      var includes = Array.from(includeSet);
+      axios({
+        method: 'get',
+        url: 'http://localhost:5000/optimize',
+        headers: { 'Content-type': 'application/json' },
+        params: { date: date, site: site, version: version, exclude: excludes, include: includes },
+        paramsSerializer: (params) => {
+          return Qs.stringify(params, {arrayFormat: 'repeat'});
+        }
+      })
+        .then((response) => {
+          this.optimized = response.data;
+        });
     },
   },
 });
