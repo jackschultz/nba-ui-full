@@ -37,9 +37,22 @@
   <div class="row">
     <h3>Optimized</h3>
     <button class="button" v-on:click="optimize()">click to optimize</button>
-    <div v-for="player in optimized.players">
-      [[ player ]]
-    </div>
+    <table>
+      <tbody>
+        <tr v-for="player in optimizedLineupPlayers">
+          <td>
+            [[ player.name ]]
+          </td>
+          <td>
+            [[ player.pos ]]
+          </td>
+          <td>
+            [[ player.sal ]]
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
   </div>
 
 

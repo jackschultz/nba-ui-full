@@ -19,9 +19,7 @@ var date = new Vue({
           var includedPlayerIds = [];
           var includedGames = [];
           var includedTeamAbbrvs = new Set(); // used for the split('-') team abbrvs
-          var optimized = {};
-          optimized['players'] = ['Jack', 'Other'];
-          console.log(optimized);
+          var optimizedLineup = {players: []};
           return { 
             games: [],
             statLines: {},
@@ -36,7 +34,7 @@ var date = new Vue({
             excludedPlayerIds: excludedPlayerIds,
             includedPlayerIds: includedPlayerIds,
             includedGames: includedGames,
-            optimized: optimized,
+            optimizedLineup: optimizedLineup,
           };
   },
   computed: {
@@ -69,7 +67,16 @@ var date = new Vue({
         });
       }
       return ssls;
-    }
+    },
+    optimizedLineupPlayers: function () {
+      console.log(this.optimizedLineup);
+      if ('players' in this.optimizedLineup) {
+        return this.optimizedLineup.players;
+      }
+      else {
+        return [];
+      }
+    },
   },
   mounted () {
     this.date = this.$el.getAttribute('data-date');
@@ -130,7 +137,7 @@ var date = new Vue({
       return game.home_team_abbrv + '-' + game.away_team_abbrv
     },
     optimize: function() {
-      this.optimized = [];
+      this.optimizedLineup = [];
       var date = this.date;
       var excludeSet = new Set();
       var includeSet = new Set();
@@ -157,7 +164,7 @@ var date = new Vue({
         }
       })
         .then((response) => {
-          this.optimized = response.data;
+          this.optimizedLineup = response.data;
         });
     },
   },
