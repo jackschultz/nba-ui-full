@@ -9,28 +9,26 @@
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.9.0/qs.min.js"></script>
     {% load staticfiles %}
-    <link rel="stylesheet" href="https://dhbhdrzi4tiry.cloudfront.net/cdn/sites/foundation.min.css">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" type= "text/css" href="{% static 'css/self.css' %}">
   </head>
   <body>
 
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+          <a class="navbar-brand" href="/">NBA UI</a>
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+              <li class="nav-item active">
+                  <a href="{% url 'games:index' %}">Games</a>
+              </li>
+            </ul>
+          </div>
+        </nav>
 
-    <div class="top-bar" id="realEstateMenu">
-      <div class="top-bar-left">
-        <ul class="menu" data-responsive-menu="accordion">
-          <li class="menu-text">NBA UI</li>
-          <li><a href="{% url 'games:index' %}">Games</a></li>
-        </ul>
-      </div>
-      <div class="top-bar-right">
-        <ul class="menu">
-          <li><a href="#">My Account</a></li>
-          <li><a class="button">Login</a></li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="row">
+    <div class="container">
       {% block content %}
       {% endblock %}
     </div>

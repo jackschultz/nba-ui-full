@@ -1,43 +1,55 @@
 var date = new Vue({
   delimiters: ['[[', ']]'],
   el: '#date',
-  data: function() { 
+  data: function() {
           var positions = ['PG', 'SG', 'SF', 'PF', 'C'];
           var statLineColumns = ['Name', 'Team', 'Points', 'Minutes', 'Active', 'Salary', 'Positions', 'Minutes', 'Points'];
           var sortOrders = {};
           var sortKey = 'proj_minutes';
           var selectedSite = 'fd';
-          var statLineColumnsTitles = ['Name', 'Team', 'Salary', 'Positions', 'Minutes', 'Points', 'Minutes', 'Points', 'Active'];
-          var statLineColumnsSortKeys = ['name', 'abbrv', 'salary', 'positions', 'proj_minutes', 'proj_points', 'minutes', 'points', 'sl_active'];
+          var statLineColumnsTitles = ['Name', 'Team', 'Salary', 'Positions', 'Minutes', 'Points', 'Minutes', 'Points', 'Active', 'Exclude'];
+          var statLineColumnsSortKeys = ['name', 'abbrv', 'salary', 'positions', 'proj_minutes', 'proj_points', 'minutes', 'points', 'sl_active', 'exclude'];
           var statLineColumns = statLineColumnsTitles.map(function(e, i) {
             return { 'title': e, 'sortKey': statLineColumnsSortKeys[i]};
           });
           statLineColumns.forEach(function (key) {
             sortOrders[key.sortKey] = -1;
           });
-          var excludedPlayerIds = [];
-          var includedPlayerIds = [];
+          var excludedPlayers = new Set();
+          var excludedPlayersSetCount = 0;
+          var includedPlayerIds = new Set();
           var includedGames = [];
-          var includedTeamAbbrvs = new Set(); // used for the split('-') team abbrvs
           var optimizedLineup = {players: []};
+          var asdf = [];
           return { 
             games: [],
             statLines: {},
             selectedStatLines: [],
-            projectionVersions: ['0.1-avg-dfn-min-05'],
-            selectedProjectionVersion: '0.1-avg-dfn-min-05' ,
+            projectionVersions: ['0.1-avg-dfn-json-min-05'],
+            selectedProjectionVersion: '0.1-avg-dfn-json-min-05' ,
             statLineColumns: statLineColumns,
             selectedSite: selectedSite,
             sortKey: sortKey,
             sortOrders: sortOrders,
             statLineColumnsSortKeys: statLineColumnsSortKeys,
-            excludedPlayerIds: excludedPlayerIds,
+            excludedPlayers: excludedPlayers,
+            excludedPlayersSetCount: excludedPlayersSetCount,
             includedPlayerIds: includedPlayerIds,
             includedGames: includedGames,
             optimizedLineup: optimizedLineup,
+            asdf: asdf,
           };
   },
   computed: {
+    excludedStatLines: function () {
+      var ssls = this.selectedStatLines;
+      if(this.excludedPlayersSetCount) {
+        ssls = ssls.filter((row) => {
+        return this.excludedPlayers.has(row.pid);
+      });
+      return ssls;
+    }
+    },
     filteredSelectedStatLines: function () {
       var sortKey = this.sortKey;
       var ssls = this.selectedStatLines;
@@ -64,6 +76,11 @@ var date = new Vue({
         });
         ssls = ssls.filter((row) => {
           return this.includedTeamAbbrvs.has(row.abbrv);
+        });
+      }
+      if(this.excludedPlayersSetCount) {
+          ssls = ssls.filter((row) => {
+          return !this.excludedPlayers.has(row.pid);
         });
       }
       return ssls;
@@ -136,6 +153,13 @@ var date = new Vue({
     gameAbbrv: function(game) {
       return game.home_team_abbrv + '-' + game.away_team_abbrv
     },
+    excludePlayer: function(pid) {
+      console.log(pid);
+      this.excludedPlayers.add(pid);
+      this.excludedPlayersSetCount += 1;
+      console.log(this.excludedPlayers);
+      console.log(this.excludedPlayersSetCount);
+    },
     optimize: function() {
       this.optimizedLineup = [];
       var date = this.date;
@@ -147,7 +171,7 @@ var date = new Vue({
           excludeSet.add(sl.pid)
         }
       });
-      this.excludedPlayerIds.forEach((pid) => {
+      this.excludedPlayers.forEach((pid) => {
         excludeSet.add(pid);
       });
       var version = this.selectedProjectionVersion;
