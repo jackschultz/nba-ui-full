@@ -3,32 +3,49 @@
 
 <div id="date" data-date="{{ date }}">
 
-  <div class="row">
-    <div class="col">
-      <h3>Games</h3>
-    </div>
-    <div class="col"></div>
-  </div>
-
 
   <div class="row">
-    <div class="col" v-if="games" v-for="game in games">
-      <div class="card" style="width: 18rem;">
-        <div class="card-body">
-          <p class="card-title">[[ game.away_team_name ]]</b> ([[ game.away_team_score ]])</p>
-          <div>vs</div>
-          <div><b>[[ game.home_team_name ]]</b> ([[game.home_team_score]]) </div>
-          <input type="checkbox" :id="gameAbbrv(game)" :value="gameAbbrv(game)" v-model="includedGames">
-          <label for="checkbox">Included</label>
-        </div>
+      <div class="col-3 game-list">
+          <h3>Games</h3>
+        <ul v-if="games" v-for="game in games" class="list-group">
+            <li class="list-group-item game-list-group-item">
+              <input type="checkbox" :id="gameAbbrv(game)" :value="gameAbbrv(game)" v-model="includedGames">
+              <b>[[ game.away_team_abbrv ]]</b> at <b>[[ game.home_team_abbrv ]]</b>
+            </li>
+        </ul>
       </div>
 
-    </div>
-    <div v-else>
-      No games today
-    </div>
+      <div class="col-6">
+          <h3>Optimized</h3>
+          <button class="button" v-on:click="optimize()">click to optimize</button>
+          <table v-if="optimizedLineupPlayers" class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Pos</th>
+                <th>Sal</th>
+                <th>ProjPts</th>
+              </tr>
+            </thead>
+            <tbody>
+                <tr is="simple-player-stat-line" v-for="player in optimizedLineupPlayers" v-bind:player="player"></tr>
+                <tr v-if="optimizedLineup.projections">
+                  <td><b>Projection</b></td>
+                  <td></td>
+                  <td></td>
+                  <td>[[ optimizedLineup.projections.points ]]</td>
+                </tr>
+                <tr v-if="optimizedLineup.actuals">
+                    <td><b>Actual</b></td>
+                    <td></td>
+                    <td></td>
+                  <td>[[ optimizedLineup.actuals.points ]]</td>
+                </tr>
+            </tbody>
+          </table>
+        </div>
+
   </div>
-  </br>
 
 
   <input type="radio" id="fd" value="fd" v-model="selectedSite">
@@ -39,48 +56,20 @@
   <br>
 
   <div class="row">
-    <div class="col large-4">
-      <h3>Optimized</h3>
-      <button class="button" v-on:click="optimize()">click to optimize</button>
-      <table class="table">
-        <tbody>
-          <tr v-for="player in optimizedLineupPlayers">
-            <td>
-              [[ player.name ]]
-            </td>
-            <td>
-              [[ player.pos ]]
-            </td>
-            <td>
-              [[ player.sal ]]
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+
     <div class="col large-4">
       <h3>Includes</h3>
-
-      <table>
+      <table class="table">
         <tbody>
+            <tr is="included-player-stat-line" v-for="player in includedStatLines" v-bind:player="player"></tr>
         </tbody>
       </table>
     </div>
     <div class="col large-4">
       <h3>Excludes</h3>
-      <table>
+      <table class="table">
           <tbody>
-            <tr v-for="player in excludedStatLines">
-              <td>
-                [[ player.name ]]
-              </td>
-              <td>
-                [[ player.pos ]]
-              </td>
-              <td>
-                [[ player.sal ]]
-              </td>
-            </tr>
+            <tr is="excluded-player-stat-line" v-for="player in excludedStatLines" v-bind:player="player"></tr>
           </tbody>
         </table>
     </div>
@@ -98,8 +87,8 @@
 
     <div class="col large-4">
       <select @change="selectedNewVersion($event)" v-model="selectedProjectionVersion">
-        <option v-for="version in projectionVersions" :value="version.version">
-          [[ version.version ]]
+        <option v-for="version in projectionVersions" :value="version">
+          [[ version ]]
         </option>
       </select>
     </div>
@@ -107,6 +96,7 @@
     </div>
   </div>
 
+  <br/>
   <div class="row">
     <div class="col">
       <table class="table table-sm stat-line-table">
@@ -120,9 +110,12 @@
             <th rowspan="1" colspan="3">
               Actuals
             </th>
+            <th rowspan="1" colspan="2">
+                Actions
+              </th>
           </tr>
           <tr>
-            <th v-for="slc in statLineColumns" @click="sortBy(slc.sortKey)">
+            <th scope="col" v-for="slc in statLineColumns" @click="sortBy(slc.sortKey)">
               [[ slc.title ]]
               <span class="arrow" :class="sortOrders[slc.sortKey] > 0 ? 'asc' : 'dsc'">
               </span>
@@ -132,7 +125,7 @@
         <tbody>
           <tr v-if="statLine" v-for="statLine in filteredSelectedStatLines">
             <td>[[ statLine.name ]]</td>
-            <td>[[ statLine.abbrv ]] </td>
+            <td>[[ statLine.team_abbrv ]] </td>
             <td v-if="selectedSite == 'dk'">[[ statLine.dk_salary ]]</td>
             <td v-if="selectedSite == 'dk'">[[ statLine.dk_positions ]]</td>
             <td v-if="selectedSite == 'fd'">[[ statLine.fd_salary ]]</td>
@@ -144,7 +137,8 @@
             <td v-if="selectedSite == 'dk'">[[ statLine.dk_points ]]</td>
             <td v-if="selectedSite == 'fd'">[[ statLine.fd_points ]]</td>
             <td>[[ statLine.sl_active ]]</td>
-            <td><button v-on:click="excludePlayer(statLine.pid)" class="btn btn-danger btn-sm">exclude</button></td>
+            <td><button v-on:click="includePlayer(statLine.pid)" class="btn btn-light btn-sm action-btn">include</button></td>
+            <td><button v-on:click="excludePlayer(statLine.pid)" class="btn btn-danger btn-sm action-btn">exclude</button></td>
           </tr>
         </tbody>
       </table>

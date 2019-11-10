@@ -20,6 +20,22 @@ table, .stat-line-table {
     border-radius: 3px;
 }
 
+.game-list {
+  font-size: 10px;
+}
+
+.game-list-group-item {
+  padding: .5rem 1rem;
+}
+
+table {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.action-btn {
+  font-size: 12px;
+}
 
   th {
     cursor: pointer;

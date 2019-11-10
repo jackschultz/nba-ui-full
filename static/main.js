@@ -1,3 +1,46 @@
+
+Vue.component('simple-player-stat-line', {
+  template: `<tr>
+  <td>{{ player.name }}</td>
+               <td>{{ player.pos }}</td>
+               <td>{{ player.sal }}</td>
+               <td>{{ player.pts }}</td>
+             </tr>`,
+  props: ['player'],
+});
+
+Vue.component('excluded-player-stat-line', {
+  template: `<tr>
+               <td>{{ player.name }}</td>
+               <td>{{ player.team_abbrv }}</td>
+               <td>{{ player.fd_positions }}</td>
+               <td>{{ player.fd_salary }}</td>
+               <td><button v-on:click="deExcludePlayer(player.pid)" class="btn btn-danger btn-sm action-btn">de-exclude</button></td>
+             </tr>`,
+  props: ['player'],
+  methods: {
+    deExcludePlayer: function(pid) {
+      this.$parent.deExcludePlayer(pid);
+    },
+  },
+});
+
+Vue.component('included-player-stat-line', {
+  template: `<tr>
+               <td>{{ player.name }}</td>
+               <td>{{ player.team_abbrv }}</td>
+               <td>{{ player.fd_positions }}</td>
+               <td>{{ player.fd_salary }}</td>
+               <td><button v-on:click="deIncludePlayer(player.pid)" class="btn btn-sm btn-light action-btn">de-include</button></td>
+             </tr>`,
+  props: ['player'],
+  methods: {
+    deIncludePlayer: function(pid) {
+      this.$parent.deIncludePlayer(pid);
+    },
+  },
+});
+
 var date = new Vue({
   delimiters: ['[[', ']]'],
   el: '#date',
@@ -7,8 +50,8 @@ var date = new Vue({
           var sortOrders = {};
           var sortKey = 'proj_minutes';
           var selectedSite = 'fd';
-          var statLineColumnsTitles = ['Name', 'Team', 'Salary', 'Positions', 'Minutes', 'Points', 'Minutes', 'Points', 'Active', 'Exclude'];
-          var statLineColumnsSortKeys = ['name', 'abbrv', 'salary', 'positions', 'proj_minutes', 'proj_points', 'minutes', 'points', 'sl_active', 'exclude'];
+          var statLineColumnsTitles = ['Name', 'Team', 'Salary', 'Positions', 'Minutes', 'Points', 'Minutes', 'Points', 'Active', 'Include', 'Exclude'];
+          var statLineColumnsSortKeys = ['name', 'team_abbrv', 'salary', 'positions', 'proj_minutes', 'proj_points', 'minutes', 'points', 'sl_active', 'include', 'exclude'];
           var statLineColumns = statLineColumnsTitles.map(function(e, i) {
             return { 'title': e, 'sortKey': statLineColumnsSortKeys[i]};
           });
@@ -17,16 +60,16 @@ var date = new Vue({
           });
           var excludedPlayers = new Set();
           var excludedPlayersSetCount = 0;
-          var includedPlayerIds = new Set();
+          var includedPlayers = new Set();
+          var includedPlayersSetCount = 0;
           var includedGames = [];
           var optimizedLineup = {players: []};
-          var asdf = [];
           return { 
             games: [],
             statLines: {},
             selectedStatLines: [],
-            projectionVersions: ['0.1-avg-dfn-json-min-05'],
-            selectedProjectionVersion: '0.1-avg-dfn-json-min-05' ,
+            projectionVersions: ['0.1-dfn-min-avg-05'],
+            selectedProjectionVersion: '0.1-dfn-min-avg-05' ,
             statLineColumns: statLineColumns,
             selectedSite: selectedSite,
             sortKey: sortKey,
@@ -34,10 +77,10 @@ var date = new Vue({
             statLineColumnsSortKeys: statLineColumnsSortKeys,
             excludedPlayers: excludedPlayers,
             excludedPlayersSetCount: excludedPlayersSetCount,
-            includedPlayerIds: includedPlayerIds,
+            includedPlayers: includedPlayers,
+            includedPlayersSetCount: includedPlayersSetCount,
             includedGames: includedGames,
             optimizedLineup: optimizedLineup,
-            asdf: asdf,
           };
   },
   computed: {
@@ -45,8 +88,17 @@ var date = new Vue({
       var ssls = this.selectedStatLines;
       if(this.excludedPlayersSetCount) {
         ssls = ssls.filter((row) => {
-        return this.excludedPlayers.has(row.pid);
-      });
+          return this.excludedPlayers.has(row.pid);
+        });
+      return ssls;
+    }
+    },
+    includedStatLines: function () {
+      var ssls = this.selectedStatLines;
+      if(this.includedPlayersSetCount) {
+        ssls = ssls.filter((row) => {
+          return this.includedPlayers.has(row.pid);
+        });
       return ssls;
     }
     },
@@ -75,7 +127,7 @@ var date = new Vue({
           });
         });
         ssls = ssls.filter((row) => {
-          return this.includedTeamAbbrvs.has(row.abbrv);
+          return this.includedTeamAbbrvs.has(row.team_abbrv);
         });
       }
       if(this.excludedPlayersSetCount) {
@@ -154,11 +206,20 @@ var date = new Vue({
       return game.home_team_abbrv + '-' + game.away_team_abbrv
     },
     excludePlayer: function(pid) {
-      console.log(pid);
       this.excludedPlayers.add(pid);
       this.excludedPlayersSetCount += 1;
-      console.log(this.excludedPlayers);
-      console.log(this.excludedPlayersSetCount);
+    },
+    deExcludePlayer: function(pid) {
+      this.excludedPlayers.delete(pid);
+      this.excludedPlayersSetCount += 1;
+    },
+    includePlayer: function(pid) {
+      this.includedPlayers.add(pid);
+      this.includedPlayersSetCount += 1;
+    },
+    deIncludePlayer: function(pid) {
+      this.includedPlayers.delete(pid);
+      this.includedPlayersSetCount += 1;
     },
     optimize: function() {
       this.optimizedLineup = [];
@@ -167,12 +228,15 @@ var date = new Vue({
       var includeSet = new Set();
       console.log(this.includedTeamAbbrvs);
       this.selectedStatLines.forEach((sl) => {
-        if (!this.includedTeamAbbrvs.has(sl.abbrv)) {
+        if (!this.includedTeamAbbrvs.has(sl.team_abbrv)) {
           excludeSet.add(sl.pid)
         }
       });
       this.excludedPlayers.forEach((pid) => {
         excludeSet.add(pid);
+      });
+      this.includedPlayers.forEach((pid) => {
+        includeSet.add(pid);
       });
       var version = this.selectedProjectionVersion;
       var site = this.selectedSite;
