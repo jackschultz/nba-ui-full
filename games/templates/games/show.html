@@ -104,14 +104,14 @@
           <tr>
             <th rowspan="1" colspan="2">
             </th>
-            <th rowspan="1" colspan="4">
+            <th rowspan="1" colspan="5">
               Projections [[ selectedProjectionVersion ]]
             </th>
             <th rowspan="1" colspan="3">
               Actuals
             </th>
             <th rowspan="1" colspan="2">
-                Actions
+              Actions
               </th>
           </tr>
           <tr>
@@ -131,11 +131,13 @@
             <td v-if="selectedSite == 'fd'">[[ statLine.fd_salary ]]</td>
             <td v-if="selectedSite == 'fd'">[[ statLine.fd_positions ]]</td>
             <td>[[ statLine.proj_minutes ]]</td>
-            <td v-if="selectedSite == 'dk'">[[ statLine.dk_proj_points ]]</td>
-            <td v-if="selectedSite == 'fd'">[[ statLine.fd_proj_points ]]</td>
+            <td v-if="selectedSite == 'dk'">[[ (statLine.dk_proj_points).toFixed(2) ]]</td>
+            <td v-if="selectedSite == 'fd'">[[ (statLine.fd_proj_points).toFixed(2) ]]</td>
+            <td v-if="selectedSite == 'dk'">[[ (statLine.dk_proj_value).toFixed(3) ]]</td>
+            <td v-if="selectedSite == 'fd'">[[ (statLine.fd_proj_value).toFixed(3) ]]</td>
             <td>[[ statLine.minutes ]]</td>
-            <td v-if="selectedSite == 'dk'">[[ statLine.dk_points ]]</td>
-            <td v-if="selectedSite == 'fd'">[[ statLine.fd_points ]]</td>
+            <td v-if="selectedSite == 'dk'">[[ (statLine.dk_points).toFixed(2) ]]</td>
+            <td v-if="selectedSite == 'fd'">[[ (statLine.fd_points).toFixed(2) ]]</td>
             <td>[[ statLine.sl_active ]]</td>
             <td><button v-on:click="includePlayer(statLine.pid)" class="btn btn-light btn-sm action-btn">include</button></td>
             <td><button v-on:click="excludePlayer(statLine.pid)" class="btn btn-danger btn-sm action-btn">exclude</button></td>

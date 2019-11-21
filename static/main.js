@@ -46,12 +46,12 @@ var date = new Vue({
   el: '#date',
   data: function() {
           var positions = ['PG', 'SG', 'SF', 'PF', 'C'];
-          var statLineColumns = ['Name', 'Team', 'Points', 'Minutes', 'Active', 'Salary', 'Positions', 'Minutes', 'Points'];
+          var statLineColumns = ['Name', 'Team', 'Points', 'Minutes', 'Value', 'Active', 'Salary', 'Positions', 'Minutes', 'Points'];
           var sortOrders = {};
           var sortKey = 'proj_minutes';
           var selectedSite = 'fd';
-          var statLineColumnsTitles = ['Name', 'Team', 'Salary', 'Positions', 'Minutes', 'Points', 'Minutes', 'Points', 'Active', 'Include', 'Exclude'];
-          var statLineColumnsSortKeys = ['name', 'team_abbrv', 'salary', 'positions', 'proj_minutes', 'proj_points', 'minutes', 'points', 'sl_active', 'include', 'exclude'];
+          var statLineColumnsTitles = ['Name', 'Team', 'Salary', 'Positions', 'Minutes', 'Points', 'Value', 'Minutes', 'Points', 'Active', 'Include', 'Exclude'];
+          var statLineColumnsSortKeys = ['name', 'team_abbrv', 'salary', 'positions', 'proj_minutes', 'proj_points', 'proj_value', 'minutes', 'points', 'sl_active', 'include', 'exclude'];
           var statLineColumns = statLineColumnsTitles.map(function(e, i) {
             return { 'title': e, 'sortKey': statLineColumnsSortKeys[i]};
           });
@@ -68,8 +68,8 @@ var date = new Vue({
             games: [],
             statLines: {},
             selectedStatLines: [],
-            projectionVersions: ['0.1-dfn-min-avg-05'],
-            selectedProjectionVersion: '0.1-dfn-min-avg-05' ,
+            projectionVersions: ['0.2-lin-reg-dfn-min'],
+            selectedProjectionVersion: '0.2-lin-reg-dfn-min' ,
             statLineColumns: statLineColumns,
             selectedSite: selectedSite,
             sortKey: sortKey,
@@ -107,7 +107,7 @@ var date = new Vue({
       var ssls = this.selectedStatLines;
       var order = this.sortOrders[sortKey] || -1;
       if (sortKey) {
-        if ( ['points', 'positions', 'salary', 'proj_points'].includes(sortKey)) {
+        if ( ['points', 'positions', 'salary', 'proj_points', 'proj_value'].includes(sortKey)) {
           sortKey = this.selectedSite + '_' + sortKey;
         }
         console.log(sortKey);
