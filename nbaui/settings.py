@@ -83,6 +83,14 @@ DATABASES = {
         'PASSWORD': 'nbauiuserpassword',
         'HOST': 'localhost',
         'PORT': '5432',
+    },
+    'data': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'nba',
+        'USER': 'nbauser',
+        'PASSWORD': 'nbapassword',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 

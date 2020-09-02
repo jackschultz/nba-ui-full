@@ -9,251 +9,164 @@ Vue.component('simple-player-stat-line', {
   props: ['player'],
 });
 
-Vue.component('excluded-player-stat-line', {
-  template: `<tr>
-               <td>{{ player.name }}</td>
-               <td>{{ player.team_abbrv }}</td>
-               <td>{{ player.fd_positions }}</td>
-               <td>{{ player.fd_salary }}</td>
-               <td><button v-on:click="deExcludePlayer(player.pid)" class="btn btn-danger btn-sm action-btn">de-exclude</button></td>
-             </tr>`,
-  props: ['player'],
-  methods: {
-    deExcludePlayer: function(pid) {
-      this.$parent.deExcludePlayer(pid);
-    },
-  },
-});
 
-Vue.component('included-player-stat-line', {
-  template: `<tr>
-               <td>{{ player.name }}</td>
-               <td>{{ player.team_abbrv }}</td>
-               <td>{{ player.fd_positions }}</td>
-               <td>{{ player.fd_salary }}</td>
-               <td><button v-on:click="deIncludePlayer(player.pid)" class="btn btn-sm btn-light action-btn">de-include</button></td>
-             </tr>`,
-  props: ['player'],
-  methods: {
-    deIncludePlayer: function(pid) {
-      this.$parent.deIncludePlayer(pid);
-    },
-  },
-});
+window.addEventListener('load', function () {
 
-var date = new Vue({
-  delimiters: ['[[', ']]'],
-  el: '#date',
-  data: function() {
-          var positions = ['PG', 'SG', 'SF', 'PF', 'C'];
-          var statLineColumns = ['Name', 'Team', 'Points', 'Minutes', 'Value', 'Active', 'Salary', 'Positions', 'Minutes', 'Points'];
-          var sortOrders = {};
-          var sortKey = 'proj_minutes';
-          var selectedSite = 'fd';
-          var statLineColumnsTitles = ['Name', 'Team', 'Salary', 'Positions', 'Minutes', 'Points', 'Value', 'Minutes', 'Points', 'Active', 'Include', 'Exclude'];
-          var statLineColumnsSortKeys = ['name', 'team_abbrv', 'salary', 'positions', 'proj_minutes', 'proj_points', 'proj_value', 'minutes', 'points', 'sl_active', 'include', 'exclude'];
-          var statLineColumns = statLineColumnsTitles.map(function(e, i) {
-            return { 'title': e, 'sortKey': statLineColumnsSortKeys[i]};
+  var date = new Vue({
+    delimiters: ['[[', ']]'],
+    el: '#date',
+    data: function() {
+            var positions = ['PG', 'SG', 'SF', 'PF', 'C'];
+            //var statLineColumns = ['Name', 'Team', 'Points', 'Minutes', 'Value', 'Active', 'Salary', 'Positions', 'Minutes', 'Points'];
+            var sortOrders = {};
+            var sortKey = 'proj_pts_pct';
+            var selectedSite = 'fd';
+            var statLineColumnsTitles = ['Name', 'Salary', 'Positions', 'Active', 'Minutes', 'Points', 'Points STD', 'Point %', 'Point % STD', 'Pts High', 'Pts Low', 'Minutes', 'Points'];
+            var statLineColumnsSortKeys = ['player_name', 'salary', 'positions', 'proj_active', 'proj_minutes', 'proj_points', 'proj_pts_std', 'proj_pts_pct', 'proj_pts_pct_std', 'proj_pts_high', 'proj_pts_low','minutes', 'points'];
+            var statLineColumns = statLineColumnsTitles.map(function(e, i) {
+              return { 'title': e, 'sortKey': statLineColumnsSortKeys[i]};
+            });
+            statLineColumns.forEach(function (key) {
+              sortOrders[key.sortKey] = -1;
+            });
+
+            var projectionVersions = ['self'];
+            var selectedProjectionVersion = ['self'];
+            var excludedPlayers = new Set();
+            var gameTeamProjections = [];
+            var optimizedLineup = {players: []};
+            return {
+              games: [],
+              statLines: {},
+              selectedStatLines: [],
+              projectionVersions: projectionVersions,
+              selectedProjectionVersion: selectedProjectionVersion,
+              statLineColumns: statLineColumns,
+              selectedSite: selectedSite,
+              sortKey: sortKey,
+              sortOrders: sortOrders,
+              statLineColumnsSortKeys: statLineColumnsSortKeys,
+              optimizedLineup: optimizedLineup,
+              gameTeamProjections: gameTeamProjections,
+            };
+    },
+    computed: {
+    },
+    mounted () {
+      this.date = this.$el.getAttribute('data-date');
+      this.starter(this.date);
+    },
+    methods: {
+      getGameTeamProjections: function(date) {
+        axios({
+          method: 'get',
+          url: 'http://localhost:5000/stat_line_projections',
+          headers: { 'Content-type': 'application/json' },
+          params: { date: date }})
+          .then((response) => {
+            console.log(response.data);
+            this.gameTeamProjections = response.data;
           });
-          statLineColumns.forEach(function (key) {
-            sortOrders[key.sortKey] = -1;
-          });
-          var excludedPlayers = new Set();
-          var excludedPlayersSetCount = 0;
-          var includedPlayers = new Set();
-          var includedPlayersSetCount = 0;
-          var includedGames = [];
-          var optimizedLineup = {players: []};
-          return { 
-            games: [],
-            statLines: {},
-            selectedStatLines: [],
-            projectionVersions: ['0.2-lin-reg-dfn-min'],
-            selectedProjectionVersion: '0.2-lin-reg-dfn-min' ,
-            statLineColumns: statLineColumns,
-            selectedSite: selectedSite,
-            sortKey: sortKey,
-            sortOrders: sortOrders,
-            statLineColumnsSortKeys: statLineColumnsSortKeys,
-            excludedPlayers: excludedPlayers,
-            excludedPlayersSetCount: excludedPlayersSetCount,
-            includedPlayers: includedPlayers,
-            includedPlayersSetCount: includedPlayersSetCount,
-            includedGames: includedGames,
-            optimizedLineup: optimizedLineup,
+      },
+      starter: function(date) {
+        this.getGameTeamProjections(date);
+      },
+      sortBy: function (key) {
+        this.sortKey = key;
+        var sortOrders = this.sortOrders;
+        this.statLineColumnsSortKeys.forEach((slcsk) => {
+          if (slcsk !== key) { sortOrders[slcsk] = 1; } else { sortOrders[key] = sortOrders[key] * -1; }
+        });
+        this.sortOrders = sortOrders;
+      },
+      editTeamProjections: function(team) {
+        console.log('editing', team);
+        Vue.set(team, 'editing', true);
+      },
+      saveTeamProjections: function(team) {
+        console.log('saving', team);
+        Vue.set(team, 'editing', false);
+        var data = team.stat_line_calcs.map(function(slc) {
+          var proj = slc.projections;
+          return {
+            id: proj.id,
+            active: proj.active,
           };
-  },
-  computed: {
-    excludedStatLines: function () {
-      var ssls = this.selectedStatLines;
-      if(this.excludedPlayersSetCount) {
-        ssls = ssls.filter((row) => {
-          return this.excludedPlayers.has(row.pid);
         });
-      return ssls;
-    }
-    },
-    includedStatLines: function () {
-      var ssls = this.selectedStatLines;
-      if(this.includedPlayersSetCount) {
-        ssls = ssls.filter((row) => {
-          return this.includedPlayers.has(row.pid);
-        });
-      return ssls;
-    }
-    },
-    filteredSelectedStatLines: function () {
-      var sortKey = this.sortKey;
-      var ssls = this.selectedStatLines;
-      var order = this.sortOrders[sortKey] || -1;
-      if (sortKey) {
-        if ( ['points', 'positions', 'salary', 'proj_points', 'proj_value'].includes(sortKey)) {
-          sortKey = this.selectedSite + '_' + sortKey;
-        }
-        console.log(sortKey);
-        if (ssls) {
-          ssls = ssls.slice().sort(function (a, b) {
-            a = a[sortKey];
-            b = b[sortKey];
-            return (a === b ? 0 : a > b ? 1 : -1) * order;
+        axios({
+          method: 'POST',
+          url: 'http://localhost:5000/stat_line_projections',
+          headers: { 'Content-type': 'application/json' },
+          data: data })
+          .then((response) => {
+            Vue.set(team, 'editing', false);
+            console.log('saved');
+            console.log(response.data);
           });
+      },
+      orderTeamStatLines: function (tsls) {
+        var sortKey = this.sortKey;
+        var order = this.sortOrders[sortKey] || -1;
+        var projectionSort = false;
+        if (sortKey) {
+          if (sortKey.includes('proj_')) {
+            projectionSort = true;
+            sortKey = sortKey.replace('proj_', ''); // this is because the ones in projections don't have the proj_ like needed for sort
+          }
+          if ( ['points', 'pts_pct', 'positions', 'salary', 'points', 'pts_pct', 'pts_pct_std', 'pts_std', 'pts_high', 'pts_low'].includes(sortKey)) {
+            sortKey = this.selectedSite + '_' + sortKey;
+          }
+          if (tsls) {
+            tsls = tsls.slice().sort(function (a, b) {
+              if (projectionSort) {
+                a = a.projections;
+                b = b.projections;
+              }
+              a = a[sortKey];
+              b = b[sortKey];
+              return (a === b ? 0 : a > b ? 1 : -1) * order;
+            });
+          }
         }
-      }
-      if(this.includedGames) {
-        this.includedTeamAbbrvs = new Set();
-        this.includedGames.map((game) => {
-          game.split('-').forEach((et) => {
-            this.includedTeamAbbrvs.add(et);
+        return tsls;
+      },
+      gameAbbrv: function(game) {
+        return game.home_team_abbrv + '-' + game.away_team_abbrv;
+      },
+      optimize: function() {
+        this.optimizedLineup = [];
+        var date = this.date;
+        var excludeSet = new Set();
+        var includeSet = new Set();
+        console.log(this.includedTeamAbbrvs);
+        this.selectedStatLines.forEach((sl) => {
+          if (!this.includedTeamAbbrvs.has(sl.team_abbrv)) {
+            excludeSet.add(sl.pid);
+          }
+        });
+        this.excludedPlayers.forEach((pid) => {
+          excludeSet.add(pid);
+        });
+        this.includedPlayers.forEach((pid) => {
+          includeSet.add(pid);
+        });
+        var version = this.selectedProjectionVersion;
+        var site = this.selectedSite;
+        var excludes = Array.from(excludeSet);
+        var includes = Array.from(includeSet);
+        axios({
+          method: 'get',
+          url: 'http://localhost:5000/optimize',
+          headers: { 'Content-type': 'application/json' },
+          params: { date: date, site: site, version: version, exclude: excludes, include: includes },
+          paramsSerializer: (params) => {
+            return Qs.stringify(params, {arrayFormat: 'repeat'});
+          }
+        })
+          .then((response) => {
+            this.optimizedLineup = response.data;
           });
-        });
-        ssls = ssls.filter((row) => {
-          return this.includedTeamAbbrvs.has(row.team_abbrv);
-        });
-      }
-      if(this.excludedPlayersSetCount) {
-          ssls = ssls.filter((row) => {
-          return !this.excludedPlayers.has(row.pid);
-        });
-      }
-      return ssls;
+      },
     },
-    optimizedLineupPlayers: function () {
-      console.log(this.optimizedLineup);
-      if ('players' in this.optimizedLineup) {
-        return this.optimizedLineup.players;
-      }
-      else {
-        return [];
-      }
-    },
-  },
-  mounted () {
-    this.date = this.$el.getAttribute('data-date');
-    this.starter(this.date);
-  },
-  methods: {
-    getGames: function(date) {
-      axios({
-        method: 'get',
-        url: 'http://localhost:5001/games',
-        headers: { 'Content-type': 'application/json' },
-        params: { date: date }})
-        .then((response) => {
-          this.games = response.data;
-          this.includedGames = [];
-          this.games.forEach((game) => {
-            return this.includedGames.push(this.gameAbbrv(game));
-          });
-        });
-    },
-    getStatLines: function(date) {
-      axios({
-        method: 'get',
-        url: 'http://localhost:5001/stat_lines',
-        headers: { 'Content-type': 'application/json' },
-        params: { date: date, version: this.selectedProjectionVersion }})
-        .then((response) => { this.selectedStatLines = response.data;
-                              this.statLines[this.selectProjectionVersion] = response.data;
-                             });
-    },
-    getProjectionVersions: function(date) {
-      axios({
-        method: 'get',
-        url: 'http://localhost:5001/versions',
-        headers: { 'Content-type': 'application/json' }})
-        .then((response) => { this.projectionVersions = response.data });
-    },
-    selectedNewVersion: function(event) {
-      this.selectedProjectionVersion = event.target.value;
-      this.getStatLines(this.date);
-    },
-    starter: function(date) {
-      this.getGames(date);
-      this.getStatLines(date);
-      this.getProjectionVersions(date);
-    },
-    sortBy: function (key) {
-      this.sortKey = key;
-      console.log(this.sortOrders);
-      var sortOrders = this.sortOrders;
-      this.statLineColumnsSortKeys.forEach((slcsk) => {
-        if (slcsk !== key) { sortOrders[slcsk] = 1; } else { sortOrders[key] = sortOrders[key] * -1; };
-      });
-      this.sortOrders = sortOrders;
-      console.log(this.sortOrders);
-    },
-    gameAbbrv: function(game) {
-      return game.home_team_abbrv + '-' + game.away_team_abbrv
-    },
-    excludePlayer: function(pid) {
-      this.excludedPlayers.add(pid);
-      this.excludedPlayersSetCount += 1;
-    },
-    deExcludePlayer: function(pid) {
-      this.excludedPlayers.delete(pid);
-      this.excludedPlayersSetCount += 1;
-    },
-    includePlayer: function(pid) {
-      this.includedPlayers.add(pid);
-      this.includedPlayersSetCount += 1;
-    },
-    deIncludePlayer: function(pid) {
-      this.includedPlayers.delete(pid);
-      this.includedPlayersSetCount += 1;
-    },
-    optimize: function() {
-      this.optimizedLineup = [];
-      var date = this.date;
-      var excludeSet = new Set();
-      var includeSet = new Set();
-      console.log(this.includedTeamAbbrvs);
-      this.selectedStatLines.forEach((sl) => {
-        if (!this.includedTeamAbbrvs.has(sl.team_abbrv)) {
-          excludeSet.add(sl.pid)
-        }
-      });
-      this.excludedPlayers.forEach((pid) => {
-        excludeSet.add(pid);
-      });
-      this.includedPlayers.forEach((pid) => {
-        includeSet.add(pid);
-      });
-      var version = this.selectedProjectionVersion;
-      var site = this.selectedSite;
-      var excludes = Array.from(excludeSet);
-      var includes = Array.from(includeSet);
-      axios({
-        method: 'get',
-        url: 'http://localhost:5000/optimize',
-        headers: { 'Content-type': 'application/json' },
-        params: { date: date, site: site, version: version, exclude: excludes, include: includes },
-        paramsSerializer: (params) => {
-          return Qs.stringify(params, {arrayFormat: 'repeat'});
-        }
-      })
-        .then((response) => {
-          this.optimizedLineup = response.data;
-        });
-    },
-  },
+  });
 });
