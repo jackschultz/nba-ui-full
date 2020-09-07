@@ -1,12 +1,9 @@
 
-Vue.component('simple-player-stat-line', {
+Vue.component('lineup-players', {
   template: `<tr>
-  <td>{{ player.name }}</td>
-               <td>{{ player.pos }}</td>
-               <td>{{ player.sal }}</td>
-               <td>{{ player.pts }}</td>
+               <td>{{ lineup.act_pts }}</td>
              </tr>`,
-  props: ['player'],
+  props: ['lineup'],
 });
 
 
@@ -19,7 +16,7 @@ window.addEventListener('load', function () {
             var positions = ['PG', 'SG', 'SF', 'PF', 'C'];
             //var statLineColumns = ['Name', 'Team', 'Points', 'Minutes', 'Value', 'Active', 'Salary', 'Positions', 'Minutes', 'Points'];
             var sortOrders = {};
-            var sortKey = 'proj_pts_pct';
+            var sortKey = 'proj_minutes';
             var selectedSite = 'fd';
             var statLineColumnsTitles = ['Name', 'Salary', 'Positions', 'Active', 'Minutes', 'Points', 'Points STD', 'Point %', 'Point % STD', 'Pts High', 'Pts Low', 'Minutes', 'Points'];
             var statLineColumnsSortKeys = ['player_name', 'salary', 'positions', 'proj_active', 'proj_minutes', 'proj_points', 'proj_pts_std', 'proj_pts_pct', 'proj_pts_pct_std', 'proj_pts_high', 'proj_pts_low','minutes', 'points'];
@@ -34,6 +31,7 @@ window.addEventListener('load', function () {
             var selectedProjectionVersion = ['self'];
             var excludedPlayers = new Set();
             var gameTeamProjections = [];
+            var lineups = [];
             var optimizedLineup = {players: []};
             return {
               games: [],
@@ -48,6 +46,7 @@ window.addEventListener('load', function () {
               statLineColumnsSortKeys: statLineColumnsSortKeys,
               optimizedLineup: optimizedLineup,
               gameTeamProjections: gameTeamProjections,
+              lineups: lineups,
             };
     },
     computed: {
@@ -57,6 +56,24 @@ window.addEventListener('load', function () {
       this.starter(this.date);
     },
     methods: {
+      teamProjMinSum: function(team) {
+        var retval = 0;
+        team.stat_line_calcs.forEach((slc) => {
+          retval += slc.projections.edited_minutes;
+        });
+        return retval;
+      },
+      getLineups: function(user_id, date) {
+        axios({
+          method: 'get',
+          url: 'http://localhost:5000/lineups',
+          headers: { 'Content-type': 'application/json' },
+          params: { user_id: user_id, date: date }})
+          .then((response) => {
+            console.log(response.data);
+            this.lineups = response.data;
+          });
+      },
       getGameTeamProjections: function(date) {
         axios({
           method: 'get',
@@ -65,11 +82,21 @@ window.addEventListener('load', function () {
           params: { date: date }})
           .then((response) => {
             console.log(response.data);
+            response.data.forEach((rd) => { // doing some calcs
+              rd.away_team.stat_line_calcs.forEach((slc) => {
+                Vue.set(slc.projections, 'edited_minutes', slc.projections.minutes);
+              });
+              rd.home_team.stat_line_calcs.forEach((slc) => {
+                Vue.set(slc.projections, 'edited_minutes', slc.projections.minutes);
+              });
+            });
             this.gameTeamProjections = response.data;
           });
       },
       starter: function(date) {
         this.getGameTeamProjections(date);
+        var user_id = 1; // hard coding this
+        this.getLineups(user_id, date);
       },
       sortBy: function (key) {
         this.sortKey = key;
@@ -91,6 +118,7 @@ window.addEventListener('load', function () {
           return {
             id: proj.id,
             active: proj.active,
+            minutes: proj.edited_minutes,
           };
         });
         axios({
@@ -101,10 +129,21 @@ window.addEventListener('load', function () {
           .then((response) => {
             Vue.set(team, 'editing', false);
             console.log('saved');
+
+            // reset the minutes and other variables
+            this.gameTeamProjections.forEach((rd) => { // doing some calcs
+              rd.away_team.stat_line_calcs.forEach((slc) => {
+                Vue.set(slc.projections, 'minutes', parseFloat(slc.projections.edited_minutes));
+              });
+              rd.home_team.stat_line_calcs.forEach((slc) => {
+                Vue.set(slc.projections, 'minutes', parseFloat(slc.projections.edited_minutes));
+              });
+            });
+
             console.log(response.data);
           });
       },
-      orderTeamStatLines: function (tsls) {
+      orderTeamStatLines: function (team, tsls) {
         var sortKey = this.sortKey;
         var order = this.sortOrders[sortKey] || -1;
         var projectionSort = false;

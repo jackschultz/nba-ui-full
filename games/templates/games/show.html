@@ -40,6 +40,7 @@
   <div class="row">
     <div class="col">
         <h5>[[ team.abbrv ]]</h5>
+        <h5>[[ team.proj_min_sum ]]</h5>
     </div>
   </div>
 
@@ -71,7 +72,7 @@
                               </tr>
                             </thead>
                             <tbody>
-                              <tr v-if="statLine" v-for="statLine in orderTeamStatLines(team.stat_line_calcs)">
+                              <tr v-if="statLine" v-for="statLine in orderTeamStatLines(team, team.stat_line_calcs)">
                                 <td>[[ statLine.player_name ]]</td>
                                 <td v-if="selectedSite == 'dk'">[[ statLine.dk_salary ]]</td>
                                 <td v-if="selectedSite == 'dk'">[[ statLine.dk_positions ]]</td>
@@ -80,7 +81,8 @@
                                 <td v-if="team.editing"><input v-bind:id="team.editing" v-model="statLine.projections.active" type="checkbox"></input></td>
                                 <td v-else-if="statLine.projections.active">&#x2705;</td>
                                 <td v-else-if="!statLine.projections.active">&#x274C;</td>
-                                <td>[[ statLine.projections.minutes ]]</td>
+                                <td v-if="team.editing"><input style="width: 40px" v-bind:id="team.editing" v-model="statLine.projections.edited_minutes" type="text"></input></td>
+                                <td v-else>[[ statLine.projections.minutes ]]</td>
                                 <td v-if="selectedSite == 'dk'">[[ (statLine.projections.dk_points) ]]</td>
                                 <td v-if="selectedSite == 'fd'">[[ (statLine.projections.fd_points) ]]</td>
                                 <td v-if="selectedSite == 'dk'">[[ (statLine.projections.dk_pts_std) ]]</td>
@@ -97,26 +99,73 @@
                                 <td v-if="selectedSite == 'dk'">[[ (statLine.dk_points) ]]</td>
                                 <td v-if="selectedSite == 'fd'">[[ (statLine.fd_points) ]]</td>
                               </tr>
+                              <tr>
+                              </tr>
+                              <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td>[[teamProjMinSum(team)]]</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td>[[team.act_pts_sum]]</td>
+                              </tr>
                             </tbody>
                           </table>
 
 
-</div
+</div>
 
 <br/>
 </div>
 
       </div>
     </div>
-  </div>
 
 
-  <br/>
-  <div class="row">
-    <div class="col">
 
+
+    <div class="row">
+      <div class="col large-4">
+        <h3>Lineups</h3>
+        <div v-if="lineups" v-for="version in lineups.versions">
+          <div>
+            <h4>[[version.title]]</h4>
+          </div>
+          <div>
+            Stats:
+          </div>
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th rowspan="1" colspan="3">Act Pts<th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="version" v-for="lineup in version.lineups">
+                <td>[[ lineup.act_pts]]</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
+
+
+
+
+
+
+  </div>
+  </div>
+
+  </div>
 {% endblock %}
